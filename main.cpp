@@ -1,13 +1,7 @@
-#include <print>
 #include "algorithms/dijkstra.cpp"
+#include <print>
 
-int main(int argc, char *argv[]) { 
+int main(int argc, char *argv[]) {
 
-    networkDela
-
+    return 0;
 }
-
-
-
-
-

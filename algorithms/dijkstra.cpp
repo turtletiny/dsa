@@ -11,60 +11,73 @@
  *
  */
 
+#include <a.out.h>
 #include <algorithm>
+#include <climits>
+#include <cstddef>
+#include <iostream>
 #include <numeric>
 #include <print>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-int network_delay(std::vector<std::vector<int>> &times, int n, int k, int destination) {
-    /* assuming max time =  1000*/
-    constexpr int INF = 1001;
-    constexpr int NO_PREV = -1;
+/* input format:
+ *
+ * src  target   time
+ * [1,     2,      1]
+ *
+ * n = number of nodes
+ * k = src node
+ * */
 
+int network_delay(std::vector<std::vector<int>> &times, int n, int k) {
+    constexpr int MAX_TIME = INT_MAX / 2;
     // init
-    std::unordered_set<int> known = {k};
-    std::vector<int> estimates(n, INF); // nodes 1 - n
-    std::vector<int> prev_node(n, NO_PREV); // nodes 1 - n 
+    std::unordered_set<int> known{k};
+    std::vector<int> estimates(n, MAX_TIME);
     estimates[k - 1] = 0;
 
-    for (auto node : times) {
-        int src = node[0];
-        int dst = node[1];
-        int t = node[2];
+    for (auto &edge : times) {
+        int src = edge[0];
+        int target = edge[1];
+        int time = edge[2];
 
         if (src == k) {
-            estimates[dst - 1] = t;
-            prev_node[dst - 1] = src;
+            estimates[target - 1] = std::min(estimates[target - 1], time);
         }
     }
 
     // loop
+
     while (known.size() < n) {
-        // find min estimates
+        int min_time = MAX_TIME;
         int min_node = -1;
-        int cur_min = INF;
-        for (int i = 0; i < estimates.size(); i++) {
-            if (!known.contains(i + 1) && estimates[i] < cur_min) {
-                cur_min = estimates[i];
-                min_node = i + 1;
+
+        for (int i = 0; i < estimates.size(); ++i) {
+            auto node_i = i + 1;
+            auto time = estimates[i];
+            if (time < min_time && !known.contains(node_i)) {
+                min_time = time;
+                min_node = node_i;
             }
         }
+        if (min_node == -1) return -1;
 
         known.insert(min_node);
-        for (const auto &edge : times) {
-            int src = edge[0];
-            int dst = edge[1];
-            int t = edge[2];
 
-            if (src == min_node && !known.contains(dst)) {
-                estimates[dst - 1] =
-                    std::min(estimates[dst - 1], estimates[src - 1] + t);
+        for (auto &edge : times) {
+            int src = edge[0];
+            int target = edge[1];
+            int time = edge[2];
+            if (src == min_node && !known.contains(target)) {
+                estimates[target - 1] =
+                    std::min(estimates[target - 1], estimates[src - 1] + time);
             }
         }
     }
 
-    return estimates[destination - 1];
+    return *std::max_element(estimates.begin(), estimates.end());
 }
 
 int main() {
@@ -72,8 +85,8 @@ int main() {
     std::vector<std::vector<int>> times = {
         {1, 2, 1}, {2, 3, 1}, {1, 4, 4}, {3, 4, 1}};
 
-    auto a = network_delay(times, 4, 1, 4);
-    std::println("{}", a);
+    auto a = network_delay(times, 4, 1);
+    std::cout << a;
 
     return 0;
 }
